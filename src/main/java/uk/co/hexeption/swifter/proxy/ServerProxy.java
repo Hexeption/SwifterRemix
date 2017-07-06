@@ -1,5 +1,5 @@
 package uk.co.hexeption.swifter.proxy;
 
-public class ServerProxy {
+public class ServerProxy extends CommonProxy {
 
 }

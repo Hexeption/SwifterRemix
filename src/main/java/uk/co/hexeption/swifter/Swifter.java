@@ -1,37 +1,66 @@
 package uk.co.hexeption.swifter;
 
-import net.minecraft.block.Block;
-import net.minecraft.item.Item;
+import com.google.common.base.Stopwatch;
+import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.registry.GameRegistry;
-import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import uk.co.hexeption.swifter.common.config.Config;
+import uk.co.hexeption.swifter.common.utils.LogHelper;
+import uk.co.hexeption.swifter.proxy.IProxy;
 
-@Mod(
-        modid = Swifter.MOD_ID,
-        name = Swifter.MOD_NAME,
-        version = Swifter.VERSION
-)
+import java.util.concurrent.TimeUnit;
+
+@Mod(modid = ModInfo.MOD_ID, name = ModInfo.MOD_NAME, dependencies = ModInfo.DEPENDENCIES, version = ModInfo.BUILD_VERION)
 public class Swifter {
 
-    public static final String MOD_ID = "swifter";
-    public static final String MOD_NAME = "Swifter";
-    public static final String VERSION = "1.0-SNAPSHOT";
 
-    /** This is the instance of your mod as created by Forge. It will never be null. */
-    @Mod.Instance(MOD_ID)
+    /**
+     * This is the instance of your mod as created by Forge. It will never be null.
+     */
+    @Mod.Instance(ModInfo.MOD_ID)
     public static Swifter INSTANCE;
+
+    /**
+     *
+     */
+    @SidedProxy(clientSide = ModInfo.CLIENT_PROXY_CLASS, serverSide = ModInfo.SERVER_PROXY_CLASS)
+    public static IProxy proxy;
+
+    /**
+     * This is the configuration for the mod.
+     */
+    public static Configuration configuration;
 
     /**
      * This is the first initialization event. Register tile entities here.
      * The registry events below will have fired prior to entry to this method.
      */
     @Mod.EventHandler
-    public void preinit(FMLPreInitializationEvent event) {
+    public void preInit(FMLPreInitializationEvent event) {
 
+        final Stopwatch stopwatch = Stopwatch.createStarted();
+        LogHelper.info("Pre Initialization (Started)");
+
+        proxy.registerConfiguration(event.getSuggestedConfigurationFile());
+
+        proxy.registerBlocks();
+
+        proxy.registerItems();
+
+        proxy.registerFurnaceRecipes();
+
+        proxy.registerEvents();
+
+        proxy.registerRenderers();
+
+        LogHelper.info("Pre Initialization (Ended after " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + "ms)");
     }
 
     /**
@@ -40,67 +69,33 @@ public class Swifter {
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
 
+        final Stopwatch stopwatch = Stopwatch.createStarted();
+        LogHelper.info("Initialization (Started)");
+
+        proxy.registerCraftingRecipes();
+
+        LogHelper.info("Initialization (Ended after " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + "ms)");
     }
 
     /**
      * This is the final initialization event. Register actions from other mods here
      */
     @Mod.EventHandler
-    public void postinit(FMLPostInitializationEvent event) {
+    public void postInit(FMLPostInitializationEvent event) {
 
+        final Stopwatch stopwatch = Stopwatch.createStarted();
+        LogHelper.info("Post Initialization (Started)");
+
+
+        LogHelper.info("Post Initialization (Ended after " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + "ms)");
     }
 
-    /**
-     * Forge will automatically look up and bind blocks to the fields in this class
-     * based on their registry name.
-     */
-    @GameRegistry.ObjectHolder(MOD_ID)
-    public static class Blocks {
-      /*
-          public static final MySpecialBlock mySpecialBlock = null; // placeholder for special block below
-      */
-    }
+    @SideOnly(Side.CLIENT)
+    @SubscribeEvent
+    public void onConfigChangedOnConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {
 
-    /**
-     * Forge will automatically look up and bind items to the fields in this class
-     * based on their registry name.
-     */
-    @GameRegistry.ObjectHolder(MOD_ID)
-    public static class Items {
-      /*
-          public static final ItemBlock mySpecialBlock = null; // itemblock for the block above
-          public static final MySpecialItem mySpecialItem = null; // placeholder for special item below
-      */
+        if (event.getModID().equalsIgnoreCase(ModInfo.MOD_ID)) {
+            Config.loadConfiguration();
+        }
     }
-
-    /**
-     * This is a special class that listens to registry events, to allow creation of mod blocks and items at the proper time.
-     */
-    @Mod.EventBusSubscriber
-    public static class ObjectRegistryHandler {
-       /** Listen for the register event for creating custom items */
-       @SubscribeEvent
-       public static void addItems(RegistryEvent.Register<Item> event) {
-           /*
-             event.getRegistry().register(new ItemBlock(Blocks.myBlock).setRegistryName(MOD_ID, "myBlock"));
-             event.getRegistry().register(new MySpecialItem().setRegistryName(MOD_ID, "mySpecialItem"));
-            */
-       }
-       /** Listen for the register event for creating custom blocks */
-       @SubscribeEvent
-       public static void addBlocks(RegistryEvent.Register<Block> event) {
-           /*
-             event.getRegistry().register(new MySpecialBlock().setRegistryName(MOD_ID, "mySpecialBlock"));
-            */
-       }
-    }
-    /* EXAMPLE ITEM AND BLOCK - you probably want these in separate files
-    public static class MySpecialItem extends Item {
-
-    }
-
-    public static class MySpecialBlock extends Block {
-
-    }
-    */
 }
